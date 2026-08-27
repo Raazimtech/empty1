@@ -1,168 +1,46 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_TRACKER_API_URL ?? "https://qjidxeyaxytiqfevqniv.supabase.co/functions/v1/track-parcel";
-
-type Parcel = {
-  trackingCode: string;
-  recipientName: string;
-  item: { category: string; description: string | null; quantity: number };
-  status: string;
-  updatedAt: string;
-};
-
-function formatStatus(status: string) {
-  return status.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function formatDate(value: string) {
-  try {
-    return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
-  } catch {
-    return value;
-  }
-}
+import { useState } from "react";
 
 export default function Home() {
   const [code, setCode] = useState("");
-  const [parcel, setParcel] = useState<Parcel | null>(null);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [installReady, setInstallReady] = useState(false);
-  const deferredPrompt = useRef<Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> } | null>(null);
+  const [error, setError] = useState("");
+  const [parcel, setParcel] = useState<any>(null);
 
-  useEffect(() => {
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-    const handler = (event: Event) => {
-      event.preventDefault();
-      deferredPrompt.current = event as typeof deferredPrompt.current;
-      setInstallReady(true);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  async function installApp() {
-    if (!deferredPrompt.current) {
-      window.alert("Use your browser menu and choose ‘Install app’ or ‘Add to Home Screen’.");
-      return;
-    }
-    await deferredPrompt.current.prompt();
-    await deferredPrompt.current.userChoice;
-    deferredPrompt.current = null;
-    setInstallReady(false);
-  }
-
-  async function track(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const normalized = code.trim().toUpperCase();
-    setParcel(null);
-    setError("");
-    if (!/^[A-Z0-9-]{4,40}$/.test(normalized)) {
-      setError("Enter a valid tracking code.");
-      return;
-    }
-
-    setLoading(true);
+  async function track(e: React.FormEvent) {
+    e.preventDefault();
+    const value = code.trim();
+    if (!value) return;
+    setLoading(true); setError(""); setParcel(null);
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trackingCode: normalized }),
-        cache: "no-store",
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "We couldn't find that parcel.");
-      setParcel(data.parcel as Parcel);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+      const base = process.env.NEXT_PUBLIC_TRACKING_FUNCTION_URL;
+      if (!base) throw new Error("Tracking service is not configured.");
+      const res = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: value }) });
+      const data = await res.json();
+      if (!res.ok || !data.parcel) throw new Error(data.error || "We couldn't find that tracking code.");
+      setParcel(data.parcel);
+    } catch (err: any) { setError(err.message || "Something went wrong."); }
+    finally { setLoading(false); }
   }
 
-  return (
-    <main className="page-shell">
-      <div className="ambient ambient-one" aria-hidden="true" />
-      <div className="ambient ambient-two" aria-hidden="true" />
-
-      <nav className="topbar" aria-label="Main navigation">
-        <div className="brand" aria-label="Safarlink Parcel">
-          <span className="brand-mark" aria-hidden="true"><span /></span>
-          <span>Safarlink <strong>Parcel</strong></span>
-        </div>
-        <div className="topbar-actions">
-          <span className="read-only"><i /> Read-only</span>
-          <button className="install-button" onClick={installApp} type="button" aria-label="Install Safarlink Parcel">
-            <span aria-hidden="true">↓</span> Install
-          </button>
-        </div>
-      </nav>
-
-      <section className="hero">
-        <div className="eyebrow"><span className="eyebrow-dot" /> SAFARLINK TRACKING</div>
-        <h1>Know where your<br /><em>parcel is.</em></h1>
-        <p className="hero-copy">Enter your tracking code to see the latest parcel status, recipient and item details.</p>
-
-        <form className="track-card" onSubmit={track} noValidate>
-          <label htmlFor="tracking-code">Tracking code</label>
-          <div className={`input-row ${error ? "has-error" : ""}`}>
-            <span className="search-icon" aria-hidden="true">⌕</span>
-            <input
-              id="tracking-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="e.g. SL-28491"
-              autoComplete="off"
-              inputMode="text"
-              maxLength={40}
-              spellCheck={false}
-              aria-describedby={error ? "tracking-error" : undefined}
-            />
-            <button className="track-button" type="submit" disabled={loading}>
-              {loading ? "Checking…" : "Track parcel"}
-              {!loading && <span aria-hidden="true">→</span>}
-            </button>
-          </div>
-          {error && <p id="tracking-error" className="error-message" role="alert">{error}</p>}
-          <p className="privacy-note"><span aria-hidden="true">⌁</span> This tracker can only view parcel information. It cannot change anything.</p>
-        </form>
-
-        {parcel && (
-          <section className="result-card" aria-live="polite">
-            <div className="result-head">
-              <div>
-                <p className="result-label">PARCEL FOUND</p>
-                <h2>{parcel.trackingCode}</h2>
-              </div>
-              <span className="status-pill"><span /> {formatStatus(parcel.status)}</span>
-            </div>
-
-            <div className="details-grid">
-              <div className="detail-block">
-                <span className="detail-label">Recipient</span>
-                <strong>{parcel.recipientName}</strong>
-              </div>
-              <div className="detail-block">
-                <span className="detail-label">Item</span>
-                <strong>{parcel.item.description || parcel.item.category}</strong>
-                <small>{parcel.item.quantity} {parcel.item.quantity === 1 ? "item" : "items"} · {parcel.item.category}</small>
-              </div>
-              <div className="detail-block wide">
-                <span className="detail-label">Last updated</span>
-                <strong>{formatDate(parcel.updatedAt)}</strong>
-              </div>
-            </div>
-          </section>
-        )}
-      </section>
-
-      <footer>
-        <span>© {new Date().getFullYear()} Safarlink</span>
-        <span className="footer-separator">•</span>
-        <span>Parcel tracking made simple.</span>
-      </footer>
-    </main>
-  );
+  return <main className="shell">
+    <header className="topbar"><a className="brand" href="/"><span className="brandmark">S</span><span>Safarlink <b>Parcel</b></span></a><button className="install" onClick={() => window.dispatchEvent(new Event("safarlink-install"))}>Install</button></header>
+    <section className="hero">
+      <div className="eyebrow"><span className="pulse"/> Safarlink parcel tracking</div>
+      <h1>Know where your<br/><em>parcel is.</em></h1>
+      <p className="lead">Enter your tracking code to see the latest status of your shipment.</p>
+      <form className="trackbox" onSubmit={track}>
+        <div className="inputwrap"><span>⌕</span><input value={code} onChange={e => setCode(e.target.value)} placeholder="Enter tracking code" aria-label="Tracking code" autoCapitalize="characters" /></div>
+        <button className="trackbtn" disabled={loading}>{loading ? "Checking…" : "Track parcel →"}</button>
+      </form>
+      {error && <div className="error" role="alert">{error}</div>}
+      {parcel && <section className="result" aria-live="polite">
+        <div className="resulthead"><div><small>TRACKING CODE</small><strong>{parcel.tracking_code}</strong></div><span className="status">{parcel.status}</span></div>
+        <div className="details"><div><small>RECIPIENT</small><strong>{parcel.recipient_name}</strong></div><div><small>ITEM</small><strong>{parcel.item}</strong></div><div><small>FROM</small><strong>{parcel.origin || "—"}</strong></div><div><small>TO</small><strong>{parcel.destination || "—"}</strong></div></div>
+        <div className="updated">● &nbsp;Last updated {parcel.updated_at ? new Date(parcel.updated_at).toLocaleString() : "recently"}</div>
+      </section>}
+    </section>
+    <footer><span>© Safarlink</span><span>Secure read-only tracking</span></footer>
+  </main>;
 }
