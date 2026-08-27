@@ -33,6 +33,7 @@ export default function Home() {
   const deferredPrompt = useRef<Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> } | null>(null);
 
   useEffect(() => {
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     const handler = (event: Event) => {
       event.preventDefault();
       deferredPrompt.current = event as typeof deferredPrompt.current;
@@ -43,7 +44,10 @@ export default function Home() {
   }, []);
 
   async function installApp() {
-    if (!deferredPrompt.current) return;
+    if (!deferredPrompt.current) {
+      window.alert("Use your browser menu and choose ‘Install app’ or ‘Add to Home Screen’.");
+      return;
+    }
     await deferredPrompt.current.prompt();
     await deferredPrompt.current.userChoice;
     deferredPrompt.current = null;
@@ -90,11 +94,9 @@ export default function Home() {
         </div>
         <div className="topbar-actions">
           <span className="read-only"><i /> Read-only</span>
-          {installReady && (
-            <button className="install-button" onClick={installApp} type="button">
-              <span aria-hidden="true">↓</span> Install
-            </button>
-          )}
+          <button className="install-button" onClick={installApp} type="button" aria-label="Install Safarlink Parcel">
+            <span aria-hidden="true">↓</span> Install
+          </button>
         </div>
       </nav>
 
