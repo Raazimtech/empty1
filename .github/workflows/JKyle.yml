@@ -1,34 +1,58 @@
-name: JKyle — Safarlink Parcel
+name: JKyle — Safarlink Parcel PWA
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: pages
   cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Generate PNG PWA icons
+
+      - name: Prepare real PWA icons
         run: |
-          convert icon-192.svg -resize 192x192 icon-192.png
-          convert icon-512.svg -resize 512x512 icon-512.png
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin
+          rsvg-convert -w 192 -h 192 icon-192.svg -o icon-192.png
+          rsvg-convert -w 512 -h 512 icon-512.svg -o icon-512.png
+          file icon-192.png icon-512.png
+
+      - name: Validate PWA files
+        run: |
+          test -f index.html
+          test -f manifest.json
+          test -f sw.js
+          test -f icon-192.png
+          test -f icon-512.png
+          grep -q '"display": "standalone"' manifest.json
+          grep -q '"start_url": "./"' manifest.json
+          grep -q '"scope": "./"' manifest.json
+          grep -q '"prefer_related_applications": false' manifest.json
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Upload static site
+
+      - name: Upload static PWA
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
