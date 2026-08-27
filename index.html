@@ -6,60 +6,43 @@
   <meta name="theme-color" content="#0b1220">
   <meta name="description" content="Track your Safarlink parcel securely with your tracking code.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230b1220'/%3E%3Cpath d='M42 18H28c-8 0-12 5-12 11s4 10 12 11h8c3 0 5 1 5 3s-2 3-5 3H17v8h20c8 0 12-5 12-11s-4-10-12-11h-8c-3 0-5-1-5-3s2-3 5-3h13z' fill='white'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Safarlink Parcel">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon-192.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-192.svg">
+  <link rel="stylesheet" href="./style.css">
   <title>Safarlink Parcel — Track your parcel</title>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <a class="brand" href="./" aria-label="Safarlink Parcel home">
-        <span class="brand-mark" aria-hidden="true">S</span>
-        <span>Safarlink <b>Parcel</b></span>
-      </a>
+      <a class="brand" href="./" aria-label="Safarlink Parcel home"><span class="brand-mark" aria-hidden="true">S</span><span>Safarlink <b>Parcel</b></span></a>
       <button class="install-button" id="installButton" type="button" hidden>Install</button>
     </header>
-
     <main class="main">
       <section class="hero" aria-labelledby="page-title">
         <div class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Safarlink parcel tracking</div>
         <h1 id="page-title">Know where your<br><span>parcel is.</span></h1>
         <p class="subtitle">Enter your tracking code to see the latest status of your shipment.</p>
-
         <form id="trackingForm" class="tracker" novalidate>
           <label class="sr-only" for="trackingCode">Tracking code</label>
-          <div class="input-area">
-            <span class="search-icon" aria-hidden="true">⌕</span>
-            <input id="trackingCode" name="trackingCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="32" placeholder="Enter tracking code" required>
-          </div>
+          <div class="input-area"><span class="search-icon" aria-hidden="true">⌕</span><input id="trackingCode" name="trackingCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64" placeholder="Enter tracking code" required></div>
           <button class="track-button" id="trackButton" type="submit">Track parcel <span aria-hidden="true">→</span></button>
         </form>
         <p class="form-hint">Your tracking code is usually printed on your Safarlink receipt.</p>
-
         <div id="message" class="message" role="alert" hidden></div>
-
         <section id="result" class="result" aria-live="polite" hidden>
-          <div class="result-header">
-            <div>
-              <small>TRACKING CODE</small>
-              <strong id="resultCode">—</strong>
-            </div>
-            <span id="resultStatus" class="status">—</span>
-          </div>
-          <div class="details">
-            <div><small>RECIPIENT</small><strong id="recipient">—</strong></div>
-            <div><small>ITEM</small><strong id="item">—</strong></div>
-            <div><small>FROM</small><strong id="origin">—</strong></div>
-            <div><small>TO</small><strong id="destination">—</strong></div>
-          </div>
+          <div class="result-header"><div><small>TRACKING CODE</small><strong id="resultCode">—</strong></div><span id="resultStatus" class="status">—</span></div>
+          <div class="details"><div><small>RECIPIENT</small><strong id="recipient">—</strong></div><div><small>ITEM</small><strong id="item">—</strong></div><div><small>FROM</small><strong id="origin">—</strong></div><div><small>TO</small><strong id="destination">—</strong></div></div>
           <div class="updated"><span aria-hidden="true">●</span><span id="updatedText">Last updated recently</span></div>
         </section>
       </section>
     </main>
-
     <footer><span>© Safarlink</span><span>Secure read-only tracking</span></footer>
   </div>
-  <script src="script.js" defer></script>
+  <script src="./script.js" defer></script>
 </body>
 </html>
