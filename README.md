@@ -1,21 +1,10 @@
 # Safarlink Parcel
 
-A simple, polished, **read-only** parcel tracking web app for Safarlink.
+A simple, fast, mobile-first parcel tracking web app for Safarlink.
 
-## Stack
+## What it does
 
-- HTML
-- CSS
-- Vanilla JavaScript
-- Supabase Edge Function as the only public parcel-data gateway
-- PWA manifest + service worker
-- GitHub Pages deployment via `JKyle.yml`
-
-## Public permissions
-
-The browser can only submit a tracking code and display the minimal parcel information returned by the tracking function. It has no database write capability and never contains a Supabase service-role key.
-
-Displayed data:
+Customers enter a Safarlink tracking code and can view the limited parcel information intended for public tracking:
 
 - Tracking code
 - Recipient name
@@ -25,24 +14,58 @@ Displayed data:
 - Current status
 - Last updated time
 
+The public application is **read-only**. It has no customer-facing ability to create, edit, delete, or update parcels.
+
+## Technology
+
+This project is intentionally built as a straightforward static web app:
+
+- HTML
+- CSS
+- Vanilla JavaScript
+- Web App Manifest / PWA support
+- Service worker
+- Supabase Edge Function for the protected tracking lookup
+
+There is no React, Next.js, build framework, or frontend database write access.
+
 ## Security model
 
-The frontend does not query `public.parcels` directly. The dedicated Supabase Edge Function is responsible for validation, authorization to the underlying data, minimal field selection, generic not-found responses, and response headers. The client validates tracking codes before sending them, uses POST, disables autocomplete, and never caches API responses. The service worker intentionally skips all tracker-function requests.
+The browser does not receive a Supabase service-role key or direct write access to the parcel database. Parcel lookup is performed through the dedicated tracking endpoint, which should return only the fields approved for public tracking.
 
-No application can honestly guarantee 100% security. For a public launch, use high-entropy tracking codes and keep rate limiting/WAF protection enabled at the API edge.
+The frontend also avoids caching parcel responses in the service worker.
 
-## Local preview
+> No web application can honestly guarantee 100% security. The goal of this project is least privilege, minimal data exposure, server-side authorization, and a deliberately small public attack surface.
 
-Because this is a static site, no Node.js build is required. Open `index.html` through a local static server (recommended for the service worker), or deploy the repository to GitHub Pages.
+## PWA
+
+Safarlink Parcel can be installed on supported devices through the **Install** button or the browser's normal install controls.
 
 ## Deployment
 
-The `JKyle.yml` workflow deploys the repository as a static GitHub Pages site whenever `main` changes. Enable GitHub Pages with **GitHub Actions** as the source in the repository settings if it is not already enabled.
+The repository includes a GitHub Actions workflow in `.github/workflows/JKyle.yml` for static deployment.
 
-## Tracker endpoint
+## Project structure
 
-The public client uses:
+```text
+.
+├── index.html
+├── style.css
+├── script.js
+├── manifest.json
+├── sw.js
+├── .github/
+│   └── workflows/
+│       └── JKyle.yml
+└── README.md
+```
 
-`https://qjidxeyaxytiqfevqniv.supabase.co/functions/v1/track-parcel`
+## Important
 
-Never add a Supabase service-role key to this repository.
+Do not place private Supabase keys, database credentials, or service-role credentials in this repository or in frontend JavaScript.
+
+The public tracker should expose only the minimum parcel information required by customers.
+
+---
+
+**Safarlink Parcel** — straightforward parcel tracking, nothing more.
