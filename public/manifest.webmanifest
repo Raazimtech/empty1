@@ -1,0 +1,13 @@
+{
+  "name": "Safarlink Parcel",
+  "short_name": "Safarlink",
+  "description": "Read-only parcel tracking for Safarlink.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7faf8",
+  "theme_color": "#087f62",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
